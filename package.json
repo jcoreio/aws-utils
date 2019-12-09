@@ -4,7 +4,9 @@
   "description": "utilities for working with AWS without breaking your brain",
   "private": true,
   "workspaces": [
-    "packages/*"
+    "packages/ecs-agent-client",
+    "packages/locate-ecs-task",
+    "packages/prompt-for-ecs-task"
   ],
   "scripts": {
     "semantic-release": "semantic-release"

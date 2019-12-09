@@ -6,6 +6,7 @@ node_modules
 !/.babelrc.js
 /packages/*/.eslintcache
 /packages/*/*.js
+!/packages/*/test/**/*.js
 /packages/*/*.js.flow
 /packages/*/*.d.ts
 /packages/*/coverage

@@ -8,7 +8,7 @@ export default async function promptForECSTask(
     serviceName?: string | null
     ECS?: AWS.ECS | null
   } = {}
-): Promise<string> {
+): Promise<{ cluster: string; task: string }> {
   const ecs = options.ECS || new AWS.ECS()
 
   const cluster =
@@ -113,5 +113,5 @@ export default async function promptForECSTask(
       )(chunks),
     },
   ])
-  return task
+  return { cluster, task }
 }
