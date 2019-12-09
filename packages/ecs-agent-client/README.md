@@ -1,9 +1,9 @@
-# ecs-agent-client
+# @jcoreio/ecs-agent-client
 
 A simple Node API for interacting with ECS Agent.
 
 ```ts
-import ECSAgentClient from '@jcoreio/aws-ecs-agent-client'
+import ECSAgentClient from '@jcoreio/ecs-agent-client'
 
 const client = new ECSAgentClient({
   protocol: 'http', // optional
