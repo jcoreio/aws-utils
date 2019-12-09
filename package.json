@@ -1,29 +1,12 @@
 {
-  "name": "typescript-library-skeleton",
+  "name": "@jcoreio/aws-utils",
   "version": "0.0.0-development",
-  "description": "my personal ES2015 library project skeleton",
-  "main": "index.js",
-  "sideEffects": false,
-  "scripts": {
-    "lint": "eslint $npm_package_config_lint",
-    "lint:fix": "eslint $npm_package_config_lint",
-    "lint:watch": "esw --watch $npm_package_config_lint",
-    "prettier": "prettier --write .babelrc.js *.json *.md *.ts '{src,test}/**/*.{js,ts}'",
-    "prettier:check": "prettier --list-different .babelrc.js *.json *.md *.ts '{src,test}/**/*.{js,ts}'",
-    "tsc": "tsc --noEmit",
-    "tsc:watch": "npm run tsc -- --watch",
-    "clean": "rimraf es lib $(cd src; ls) *.js *.d.ts",
-    "build": "npm run clean && npm run build:types && npm run build:js",
-    "build:types": "tsc --emitDeclarationOnly",
-    "build:js": "babel src --out-dir es --extensions \".ts\" --source-maps inline && cross-env BABEL_ENV=es5 babel src --out-dir . --extensions \".ts\"",
-    "test": "cross-env NODE_ENV=test BABEL_ENV=es5 mocha $npm_package_config_mocha && cross-env NODE_ENV=test BABEL_ENV=coverage nyc --reporter=lcov --reporter=text mocha $npm_package_config_mocha",
-    "test:watch": "cross-env NODE_ENV=test BABEL_ENV=test mocha $npm_package_config_mocha --watch --watch-extensions js,ts",
-    "test:debug": "cross-env NODE_ENV=test BABEL_ENV=test mocha --inspect-brk $npm_package_config_mocha",
-    "codecov": "nyc report --reporter=text-lcov > coverage.lcov; codecov",
-    "prepublishOnly": "npm run clean && npm run prettier:check && npm run lint && npm test && npm run build",
-    "open:coverage": "open coverage/lcov-report/index.html",
-    "semantic-release": "semantic-release"
-  },
+  "description": "utilities for working with AWS without breaking your brain",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {},
   "config": {
     "lint": "--cache --ext .js,.ts src test",
     "mocha": "test/configure.js 'src/**/*.spec.ts'",
@@ -33,9 +16,9 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "lint-staged && npm run lint && npm run tsc",
+      "pre-commit": "lint-staged && yarn workspaces run lint && yarn workspaces run tsc",
       "commit-msg": "commitlint -e $GIT_PARAMS",
-      "pre-push": "npm test"
+      "pre-push": "yarn workspaces test"
     }
   },
   "lint-staged": {
@@ -69,20 +52,21 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/jedwards1211/typescript-library-skeleton.git"
+    "url": "https://github.com/jcoreio/aws-utils.git"
   },
   "keywords": [
-    "typescript"
+    "aws"
   ],
   "author": "Andy Edwards",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/jedwards1211/typescript-library-skeleton/issues"
+    "url": "https://github.com/jcoreio/aws-utils/issues"
   },
-  "homepage": "https://github.com/jedwards1211/typescript-library-skeleton#readme",
+  "homepage": "https://github.com/jcoreio/aws-utils#readme",
   "devDependencies": {
     "@babel/cli": "^7.1.5",
     "@babel/core": "^7.1.6",
+    "@babel/node": "^7.7.4",
     "@babel/plugin-proposal-class-properties": "^7.1.0",
     "@babel/plugin-proposal-export-default-from": "^7.0.0",
     "@babel/plugin-proposal-export-namespace-from": "^7.0.0",
