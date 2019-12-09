@@ -1,0 +1,72 @@
+{
+  "name": "@jcoreio/prompt-for-ecs-task",
+  "version": "0.0.0-development",
+  "description": "Prompt the user to select an ECS task in the terminal",
+  "main": "index.js",
+  "sideEffects": false,
+  "scripts": {
+    "start": "babel-node --extensions \".ts\" start.ts",
+    "lint": "eslint $npm_package_config_lint",
+    "lint:fix": "eslint $npm_package_config_lint",
+    "lint:watch": "esw --watch $npm_package_config_lint",
+    "prettier": "prettier --write .babelrc.js *.json *.md *.ts '{src,test}/**/*.{js,ts}'",
+    "prettier:check": "prettier --list-different .babelrc.js *.json *.md *.ts '{src,test}/**/*.{js,ts}'",
+    "tsc": "tsc --noEmit",
+    "tsc:watch": "npm run tsc -- --watch",
+    "clean": "rimraf es lib $(cd src; ls) *.js *.d.ts",
+    "build": "npm run clean && npm run build:types && npm run build:js",
+    "build:types": "tsc --emitDeclarationOnly",
+    "build:js": "babel src --out-dir es --extensions \".ts\" --source-maps inline && cross-env BABEL_ENV=es5 babel src --out-dir . --extensions \".ts\"",
+    "test": "cross-env NODE_ENV=test BABEL_ENV=es5 mocha $npm_package_config_mocha && cross-env NODE_ENV=test BABEL_ENV=coverage nyc --reporter=lcov --reporter=text mocha $npm_package_config_mocha",
+    "test:watch": "cross-env NODE_ENV=test BABEL_ENV=test mocha $npm_package_config_mocha --watch --watch-extensions js,ts",
+    "test:debug": "cross-env NODE_ENV=test BABEL_ENV=test mocha --inspect-brk $npm_package_config_mocha",
+    "codecov": "nyc report --reporter=text-lcov > coverage.lcov; codecov",
+    "prepublishOnly": "npm run clean && npm run prettier:check && npm run lint && npm test && npm run build",
+    "open:coverage": "open coverage/lcov-report/index.html",
+    "semantic-release": "semantic-release -e semantic-release-monorepo"
+  },
+  "config": {
+    "lint": "--cache --ext .js,.ts src test",
+    "mocha": "test/configure.js 'src/**/*.spec.ts'",
+    "commitizen": {
+      "path": "cz-conventional-changelog"
+    }
+  },
+  "nyc": {
+    "include": [
+      "src/**/*.ts"
+    ],
+    "exclude": [
+      "src/**/*.spec.ts"
+    ],
+    "require": [
+      "@babel/register"
+    ],
+    "sourceMap": false,
+    "instrument": false
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jcoreio/aws-utils.git"
+  },
+  "keywords": [
+    "aws",
+    "ecs"
+  ],
+  "author": "Andy Edwards",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jcoreio/aws-utils/issues"
+  },
+  "homepage": "https://github.com/jcoreio/aws-utils#readme",
+  "devDependencies": {
+    "@types/inquirer": "^6.5.0",
+    "@types/lodash": "^4.14.149"
+  },
+  "dependencies": {
+    "@babel/runtime": "^7.1.5",
+    "aws-sdk": "^2.585.0",
+    "inquirer": "^7.0.0",
+    "lodash": "^4.17.15"
+  }
+}
