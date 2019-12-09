@@ -29,10 +29,10 @@ jobs:
 
       - run:
           name: build
-          command: yarn run prepublishOnly
+          command: yarn workspaces run prepublishOnly
       - run:
           name: upload test coverage
-          command: yarn codecov || true
+          command: yarn workspaces run codecov || true
       - run:
           name: release
-          command: yarn run semantic-release || true
+          command: yarn workspaces run semantic-release || true
