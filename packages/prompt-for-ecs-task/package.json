@@ -1,6 +1,6 @@
 {
   "name": "@jcoreio/prompt-for-ecs-task",
-  "version": "0.0.0-development",
+  "version": "1.0.0",
   "description": "Prompt the user to select an ECS task in the terminal",
   "main": "index.js",
   "sideEffects": false,

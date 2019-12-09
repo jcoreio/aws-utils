@@ -1,6 +1,6 @@
 {
   "name": "@jcoreio/ecs-agent-client",
-  "version": "0.0.0-development",
+  "version": "1.0.0",
   "description": "Node.js API for interacting with ECS Agent",
   "main": "index.js",
   "sideEffects": false,
