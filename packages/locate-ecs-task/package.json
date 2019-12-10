@@ -64,7 +64,7 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.1.5",
-    "@jcoreio/locate-ecs-task": "^1.0.0",
+    "@jcoreio/ecs-agent-client": "^1.0.0",
     "aws-sdk": "^2.585.0"
   }
 }
