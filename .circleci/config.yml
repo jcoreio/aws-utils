@@ -17,6 +17,7 @@ jobs:
             yarn config set registry "https://registry.npmjs.org/"
             echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > .npmrc
             echo "registry=https://registry.npmjs.org/" >> .npmrc
+            for pkg in packages/*; do cp .npmrc $pkg; done
 
       - run:
           name: Install Dependencies
