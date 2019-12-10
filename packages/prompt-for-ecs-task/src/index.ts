@@ -1,10 +1,11 @@
 import AWS from 'aws-sdk'
-import { flow, compact, flatten, map, sortBy } from 'lodash/fp'
+import { flow, compact, flatten, map, sortBy, filter } from 'lodash/fp'
 import * as inquirer from 'inquirer'
 
 export default async function promptForECSTask(
   options: {
     cluster?: string | null
+    clusterFilter?: null | ((cluster: AWS.ECS.Cluster) => boolean)
     serviceName?: string | null
     ECS?: AWS.ECS | null
   } = {}
@@ -41,6 +42,7 @@ export default async function promptForECSTask(
           choices: flow(
             compact,
             flatten,
+            filter(options.clusterFilter || ((): boolean => true)),
             map(({ clusterName, clusterArn }: AWS.ECS.Cluster) => ({
               name: clusterName,
               value: clusterArn,
