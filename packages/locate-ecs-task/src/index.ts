@@ -9,6 +9,8 @@ export default async function locateECSTask(options: {
 }): Promise<{
   ec2InstanceId: string
   Containers: Container[]
+  PublicDnsName: string | undefined
+  PublicIpAddress: string | undefined
   PrivateDnsName: string
   PrivateIpAddress: string
 }> {
@@ -64,7 +66,7 @@ export default async function locateECSTask(options: {
   if (!Instances || !Instances[0])
     throw new Error(`failed to get EC2 instance: ${ec2InstanceId}`)
 
-  const [{ NetworkInterfaces }] = Instances
+  const [{ PublicDnsName, PublicIpAddress, NetworkInterfaces }] = Instances
 
   if (!NetworkInterfaces || !NetworkInterfaces[0])
     throw new Error(
@@ -88,5 +90,12 @@ export default async function locateECSTask(options: {
 
   const { Containers } = await ecsAgent.task(task)
 
-  return { ec2InstanceId, Containers, PrivateDnsName, PrivateIpAddress }
+  return {
+    ec2InstanceId,
+    Containers,
+    PublicDnsName,
+    PublicIpAddress,
+    PrivateDnsName,
+    PrivateIpAddress,
+  }
 }
