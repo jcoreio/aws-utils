@@ -2,7 +2,6 @@ import AWS from 'aws-sdk'
 import { flow, map, filter, fromPairs } from 'lodash/fp'
 import locateECSTask from '@jcoreio/locate-ecs-task'
 import path from 'path'
-import emitted from 'p-event'
 import superagent from 'superagent'
 import fs from 'fs-extra'
 import { DateTime } from 'luxon'
@@ -66,7 +65,7 @@ export async function getTaskInfo({
   const binding = networkBindings.find(b => b.containerPort === containerPort)
   if (!binding) throw new Error(`missing networkBinding for PROFILER_PORT`)
 
-  const { PrivateDnsName } = await locateECSTask({
+  const { PublicDnsName, PrivateDnsName } = await locateECSTask({
     task,
     cluster,
     ECS,
@@ -75,18 +74,15 @@ export async function getTaskInfo({
 
   return {
     name,
-    profilerBaseUrl: `http${
-      PROFILER_PORT === '443' ? 's' : ''
-    }://${PrivateDnsName}:${binding.hostPort}/${PROFILER_BASE_URL.replace(
-      /^\/|\/$/g,
-      ''
-    )}`,
+    profilerBaseUrl: `http://${PublicDnsName || PrivateDnsName}:${
+      binding.hostPort
+    }/${PROFILER_BASE_URL.replace(/^\/|\/$/g, '')}`,
   }
 }
 
 export function getOutFile(cluster: string, task: string, ext: string): string {
   return path.join(
-    cluster,
+    cluster.replace(/^arn([^/]+?)cluster\//g, ''),
     task,
     `${task}-${DateTime.local().toFormat('yyyy-MM-dd hh:mm:ss a')}.${ext}`
   )
@@ -117,18 +113,13 @@ export async function profileCPU(options: {
     getOutFile(cluster, name || task, 'cpuprofile')
   )
   await fs.mkdirs(path.dirname(outFile))
-  const out = fs.createWriteStream(outFile, 'utf8')
-  const finished = emitted(out, 'finish', { rejectionEvents: ['error'] })
 
-  process.stderr.write(`Saving to ${outFile}...`)
-
-  await superagent
+  process.stderr.write(`Downloading to ${outFile}...`)
+  const profile = await superagent
     .get(profilerBaseUrl + '/cpu')
     .timeout({ response: durationMillis * 2 })
     .query({ durationMillis })
-    .pipe(out)
-
-  await finished
+  await fs.writeJSON(outFile, profile)
   process.stderr.write(`done\n`)
 
   return { file: outFile }
@@ -158,17 +149,12 @@ export async function takeHeapSnapshot(options: {
     getOutFile(cluster, name || task, 'heapsnapshot')
   )
   await fs.mkdirs(path.dirname(outFile))
-  const out = fs.createWriteStream(outFile, 'utf8')
-  const finished = emitted(out, 'finish', { rejectionEvents: ['error'] })
 
-  process.stderr.write(`Saving to ${outFile}...`)
-
-  await superagent
+  process.stderr.write(`Downloading to ${outFile}...`)
+  const snapshot = await superagent
     .get(profilerBaseUrl + '/heap')
     .timeout({ response: 60000 })
-    .pipe(out)
-
-  await finished
+  await fs.writeJSON(outFile, snapshot)
   process.stderr.write(`done\n`)
 
   return { file: outFile }
