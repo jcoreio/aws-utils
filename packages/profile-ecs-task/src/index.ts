@@ -115,10 +115,11 @@ export async function profileCPU(options: {
   await fs.mkdirs(path.dirname(outFile))
 
   process.stderr.write(`Downloading to ${outFile}...`)
-  const profile = await superagent
+  const { body: profile } = await superagent
     .get(profilerBaseUrl + '/cpu')
     .timeout({ response: durationMillis * 2 })
     .query({ durationMillis })
+    .accept('json')
   await fs.writeJSON(outFile, profile)
   process.stderr.write(`done\n`)
 
@@ -151,9 +152,10 @@ export async function takeHeapSnapshot(options: {
   await fs.mkdirs(path.dirname(outFile))
 
   process.stderr.write(`Downloading to ${outFile}...`)
-  const snapshot = await superagent
+  const { body: snapshot } = await superagent
     .get(profilerBaseUrl + '/heap')
     .timeout({ response: 60000 })
+    .accept('json')
   await fs.writeJSON(outFile, snapshot)
   process.stderr.write(`done\n`)
 
