@@ -6,7 +6,8 @@
   "workspaces": [
     "packages/ecs-agent-client",
     "packages/locate-ecs-task",
-    "packages/prompt-for-ecs-task"
+    "packages/prompt-for-ecs-task",
+    "packages/profile-ecs-task"
   ],
   "scripts": {
     "semantic-release": "semantic-release"
