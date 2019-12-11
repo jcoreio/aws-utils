@@ -28,15 +28,14 @@ export async function getTaskInfo({
   ECS: AWS.ECS
   EC2?: AWS.EC2 | undefined
 }): Promise<{ profilerBaseUrl: string; name: string | undefined }> {
-  const { tasks } = await ECS.describeTasks({
-    tasks: [task],
+  const { Task, PublicDnsName, PrivateDnsName } = await locateECSTask({
+    task,
     cluster,
-  }).promise()
+    ECS,
+    EC2,
+  })
 
-  const descr = tasks ? tasks.find(t => t.taskArn === task) : null
-  if (!descr) throw new Error(`task not found: ${task}`)
-
-  const { taskDefinitionArn, containers } = descr
+  const { taskDefinitionArn, containers } = Task
   if (!taskDefinitionArn) throw new Error(`missing taskDefinitionArn`)
   if (!containers || containers.length !== 1)
     throw new Error(`there must be exactly one container in task: ${task}`)
@@ -65,13 +64,6 @@ export async function getTaskInfo({
   const containerPort = parseInt(PROFILER_PORT)
   const binding = networkBindings.find(b => b.containerPort === containerPort)
   if (!binding) throw new Error(`missing networkBinding for PROFILER_PORT`)
-
-  const { PublicDnsName, PrivateDnsName } = await locateECSTask({
-    task,
-    cluster,
-    ECS,
-    EC2,
-  })
 
   return {
     name,
