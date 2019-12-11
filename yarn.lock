@@ -1096,6 +1096,15 @@
     unique-filename "^1.1.1"
     which "^1.3.1"
 
+"@jcoreio/locate-ecs-task@^1.1.0":
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/@jcoreio/locate-ecs-task/-/locate-ecs-task-1.1.0.tgz#8f58ca39aa9b5ceaae47e5d217e8dae30a8860b1"
+  integrity sha512-hQDtx0mKMhG13nZHhWjBF3EUT13cDj7yfRUJrdXYqfzSaOxTZMuucAoiLLC8hhLoZpkumBmwU0HUPsvbBJIMIQ==
+  dependencies:
+    "@babel/runtime" "^7.1.5"
+    "@jcoreio/ecs-agent-client" "^1.0.0"
+    aws-sdk "^2.585.0"
+
 "@jedwards1211/commitlint-config@^1.0.0":
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/@jedwards1211/commitlint-config/-/commitlint-config-1.0.0.tgz#a3e56e5cd5c78a923c7c49f08fbbdc7b02756fd7"

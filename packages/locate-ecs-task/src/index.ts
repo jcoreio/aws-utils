@@ -1,5 +1,19 @@
 import AWS from 'aws-sdk'
-import ECSAgentClient, { Container } from '@jcoreio/ecs-agent-client'
+
+function findInstance(
+  Reservations: AWS.EC2.Reservation[] | undefined,
+  InstanceId: string
+): AWS.EC2.Instance | undefined {
+  if (!Reservations) return undefined
+  for (const { Instances } of Reservations) {
+    if (!Instances) continue
+    for (const Instance of Instances) {
+      if (Instance.InstanceId === InstanceId) {
+        return Instance
+      }
+    }
+  }
+}
 
 export default async function locateECSTask(options: {
   task: string
@@ -8,11 +22,13 @@ export default async function locateECSTask(options: {
   EC2?: AWS.EC2 | null
 }): Promise<{
   ec2InstanceId: string
-  Containers: Container[]
   PublicDnsName: string | undefined
   PublicIpAddress: string | undefined
   PrivateDnsName: string
   PrivateIpAddress: string
+  Task: AWS.ECS.Task
+  ContainerInstance: AWS.ECS.ContainerInstance
+  Instance: AWS.EC2.Instance
 }> {
   const { task } = options
   const cluster = options.cluster || 'default'
@@ -26,9 +42,11 @@ export default async function locateECSTask(options: {
     })
     .promise()
 
-  if (!tasks) throw new Error(`task not found: ${task}`)
+  const Task = tasks ? tasks[0] : null
 
-  const [{ containerInstanceArn }] = tasks
+  if (!Task) throw new Error(`task not found: ${task}`)
+
+  const { containerInstanceArn } = Task
 
   if (!containerInstanceArn)
     throw new Error(`failed to get containerInstanceArn for task: ${task}`)
@@ -40,10 +58,17 @@ export default async function locateECSTask(options: {
     })
     .promise()
 
-  if (!containerInstances)
+  if (containerInstances && containerInstances.length > 1) {
+    throw new Error(
+      `this Task has multiple ContainerInstances, which isn't currently supported`
+    )
+  }
+  const ContainerInstance = containerInstances ? containerInstances[0] : null
+
+  if (!ContainerInstance)
     throw new Error(`failed to get container instance: ${containerInstanceArn}`)
 
-  const [{ ec2InstanceId }] = containerInstances
+  const { ec2InstanceId } = ContainerInstance
 
   if (!ec2InstanceId)
     throw new Error(
@@ -56,17 +81,11 @@ export default async function locateECSTask(options: {
     })
     .promise()
 
-  if (!Reservations || !Reservations[0])
-    throw new Error(
-      `failed to get Reservations for EC2 instance: ${ec2InstanceId}`
-    )
+  const Instance = findInstance(Reservations, ec2InstanceId)
 
-  const [{ Instances }] = Reservations
+  if (!Instance) throw new Error(`failed to get EC2 instance: ${ec2InstanceId}`)
 
-  if (!Instances || !Instances[0])
-    throw new Error(`failed to get EC2 instance: ${ec2InstanceId}`)
-
-  const [{ PublicDnsName, PublicIpAddress, NetworkInterfaces }] = Instances
+  const { PublicDnsName, PublicIpAddress, NetworkInterfaces } = Instance
 
   if (!NetworkInterfaces || !NetworkInterfaces[0])
     throw new Error(
@@ -84,18 +103,14 @@ export default async function locateECSTask(options: {
       `failed to get PrivateDnsName for EC2 instance: ${ec2InstanceId}`
     )
 
-  const ecsAgent = new ECSAgentClient({
-    host: PrivateDnsName,
-  })
-
-  const { Containers } = await ecsAgent.task(task)
-
   return {
     ec2InstanceId,
-    Containers,
     PublicDnsName,
     PublicIpAddress,
     PrivateDnsName,
     PrivateIpAddress,
+    Task,
+    ContainerInstance,
+    Instance,
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "@jcoreio/locate-ecs-task",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "description": "Node.js API for interacting with ECS Agent",
   "main": "index.js",
   "sideEffects": false,
@@ -59,12 +59,9 @@
     "url": "https://github.com/jcoreio/aws-utils/issues"
   },
   "homepage": "https://github.com/jcoreio/aws-utils#readme",
-  "devDependencies": {
-    "@types/node-fetch": "^2.5.4"
-  },
+  "devDependencies": {},
   "dependencies": {
     "@babel/runtime": "^7.1.5",
-    "@jcoreio/ecs-agent-client": "^1.0.0",
     "aws-sdk": "^2.585.0"
   }
 }
