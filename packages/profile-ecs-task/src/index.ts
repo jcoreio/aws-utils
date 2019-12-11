@@ -2,9 +2,10 @@ import AWS from 'aws-sdk'
 import { flow, map, filter, fromPairs } from 'lodash/fp'
 import locateECSTask from '@jcoreio/locate-ecs-task'
 import path from 'path'
-import superagent from 'superagent'
+import request, { Request } from 'request'
 import fs from 'fs-extra'
 import { DateTime } from 'luxon'
+import { Writable } from 'stream'
 
 function environmentToObject(
   environment: AWS.ECS.KeyValuePair[] | undefined
@@ -84,8 +85,16 @@ export function getOutFile(cluster: string, task: string, ext: string): string {
   return path.join(
     cluster.replace(/^arn([^/]+?)cluster\//g, ''),
     task,
-    `${task}-${DateTime.local().toFormat('yyyy-MM-dd hh:mm:ss a')}.${ext}`
+    `${task}-${DateTime.local().toFormat('yyyy-MM-dd-hh:mm:ss-a')}.${ext}`
   )
+}
+
+async function pipeResponse(req: Request, out: Writable): Promise<void> {
+  await new Promise((resolve, reject) => {
+    out.on('finish', resolve)
+    out.on('error', reject)
+    req.on('error', reject).pipe(out)
+  })
 }
 
 export async function profileCPU(options: {
@@ -114,13 +123,19 @@ export async function profileCPU(options: {
   )
   await fs.mkdirs(path.dirname(outFile))
 
-  process.stderr.write(`Downloading to ${outFile}...`)
-  const { body: profile } = await superagent
-    .get(profilerBaseUrl + '/cpu')
-    .timeout({ response: durationMillis * 2 })
-    .query({ durationMillis })
-    .accept('json')
-  await fs.writeJSON(outFile, profile)
+  process.stderr.write(
+    `${profilerBaseUrl}/cpu?durationMillis=${durationMillis}
+  -> ${path.relative(process.cwd(), outFile)}...`
+  )
+  await pipeResponse(
+    request.get({
+      uri: profilerBaseUrl + '/cpu',
+      timeout: durationMillis * 2,
+      qs: { durationMillis },
+      headers: { Accept: 'application/json' },
+    }),
+    fs.createWriteStream(outFile, 'utf8')
+  )
   process.stderr.write(`done\n`)
 
   return { file: outFile }
@@ -151,12 +166,18 @@ export async function takeHeapSnapshot(options: {
   )
   await fs.mkdirs(path.dirname(outFile))
 
-  process.stderr.write(`Downloading to ${outFile}...`)
-  const { body: snapshot } = await superagent
-    .get(profilerBaseUrl + '/heap')
-    .timeout({ response: 60000 })
-    .accept('json')
-  await fs.writeJSON(outFile, snapshot)
+  process.stderr.write(
+    `${profilerBaseUrl}/heap
+  -> ${path.relative(process.cwd(), outFile)}...`
+  )
+  await pipeResponse(
+    request.get({
+      uri: `${profilerBaseUrl}/heap`,
+      timeout: 60000,
+      headers: { Accept: 'application/json' },
+    }),
+    fs.createWriteStream(outFile, 'utf8')
+  )
   process.stderr.write(`done\n`)
 
   return { file: outFile }

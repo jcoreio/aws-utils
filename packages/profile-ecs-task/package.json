@@ -63,17 +63,17 @@
     "@jcoreio/prompt-for-ecs-task": "^1.0.0",
     "@types/fs-extra": "^8.0.1",
     "@types/lodash": "^4.14.149",
-    "@types/luxon": "^1.21.0",
-    "@types/superagent": "^4.1.4"
+    "@types/luxon": "^1.21.0"
   },
   "dependencies": {
     "@babel/runtime": "^7.1.5",
     "@jcoreio/locate-ecs-task": "^1.1.0",
+    "@types/request": "^2.48.3",
     "aws-sdk": "^2.585.0",
     "fs-extra": "^8.1.0",
     "lodash": "^4.17.15",
     "luxon": "^1.21.3",
     "p-event": "^4.1.0",
-    "superagent": "^5.1.2"
+    "request": "^2.88.0"
   }
 }
