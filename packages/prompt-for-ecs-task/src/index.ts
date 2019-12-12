@@ -1,9 +1,9 @@
 import AWS from 'aws-sdk'
-import { flow, flatten, map, sortBy, filter } from 'lodash/fp'
+import { flatten, groupBy, map, sortBy, filter, compact, noop } from 'lodash/fp'
 import * as inquirer from 'inquirer'
 import path from 'path'
 import fs from 'fs-extra'
-import { differenceWith, isEqual } from 'lodash'
+import { flow, differenceWith, isEqual } from 'lodash'
 
 type Recent = {
   cluster: string
@@ -137,15 +137,15 @@ export default async function promptForECSTask(
     : { version: CURRENT_CACHE_VERSION }
 
   const updateCache = async (
-    updater: (cache: Cache) => Cache
+    updater: (cache: Cache) => Cache | Promise<Cache>
   ): Promise<void> => {
     if (!cacheFile) return
     if (!isSupportedCacheVersion(cache.version)) return
-    cache = updater(cache)
+    cache = await updater(cache)
     await fs.writeJSON(cacheFile, cache)
   }
 
-  const setRecent = (result: Recent): Promise<void> =>
+  const markRecent = (result: Recent): Promise<void> =>
     updateCache((cache: Cache) => ({
       ...cache,
       recent: [
@@ -154,145 +154,148 @@ export default async function promptForECSTask(
       ].slice(0, 20),
     }))
 
-  const pruneObsoleteClusters = (clusters: AWS.ECS.Cluster[]): Promise<void> =>
-    updateCache((cache: Cache) => {
-      const remaining = new Set(clusters.map(c => c.clusterArn))
-      return {
-        ...cache,
-        recent: (cache.recent || []).filter(item =>
-          remaining.has(item.cluster)
-        ),
-      }
-    })
+  const pruneObsoleteTasks = (): Promise<void> =>
+    updateCache(
+      async (cache: Cache): Promise<Cache> => {
+        if (!cache.recent || !cache.recent.length) return cache
+        const groups = flow(
+          groupBy((item: Recent) => item.cluster),
+          (map as any).convert({ cap: false })((
+            group: Recent[],
+            cluster: string // eslint-disable-line @typescript-eslint/no-explicit-any
+          ) =>
+            ecs
+              .describeTasks({
+                cluster,
+                tasks: group.map(item => item.task),
+              })
+              .promise()
+          )
+        )(cache.recent) as Promise<AWS.ECS.DescribeTasksResponse>[]
 
-  const pruneObsoleteServices = (
-    cluster: string,
-    services: AWS.ECS.Service[]
-  ): Promise<void> =>
-    updateCache((cache: Cache) => {
-      const remaining = new Set(services.map(c => c.serviceName))
-      return {
-        ...cache,
-        recent: (cache.recent || []).filter(
-          item => item.cluster !== cluster || remaining.has(item.serviceName)
-        ),
-      }
-    })
+        const remaining = new Set(
+          flow(
+            map((r: AWS.ECS.DescribeTasksResponse) => r.tasks),
+            compact,
+            flatten,
+            map(t => t.taskArn),
+            compact
+          )(await Promise.all(groups))
+        )
 
-  const pruneObsoleteTasks = (
-    cluster: string,
-    serviceName: string,
-    tasks: AWS.ECS.Task[]
-  ): Promise<void> =>
-    updateCache((cache: Cache) => {
-      const remaining = new Set(tasks.map(c => c.taskArn))
-      return {
-        ...cache,
-        recent: (cache.recent || []).filter(
-          item =>
-            item.cluster !== cluster ||
-            item.serviceName !== serviceName ||
-            remaining.has(item.task)
-        ),
+        return {
+          ...cache,
+          recent: cache.recent.filter(item => remaining.has(item.task)),
+        }
       }
-    })
+    )
 
   const clustersPromise = options.cluster
     ? Promise.resolve([])
     : getClusters(ecs)
   clustersPromise.catch(error => console.error(error.stack)) // eslint-disable-line no-console
 
-  if (isSupportedCacheVersion(cache.version)) {
-    const { cluster } = options
-    const recent =
-      cache.recent && cluster
-        ? cache.recent.filter(
-            item => displayCluster(item.cluster) === displayCluster(cluster)
-          )
-        : cache.recent
-    if (recent && recent.length) {
-      const choices = recent.map(({ cluster, serviceName, task }) => ({
-        name: [displayCluster(cluster), serviceName, displayTask(task)].join(
-          ' > '
-        ),
-        value: { cluster, serviceName, task },
-      }))
-      choices.splice(1, 0, {
-        name: 'None (Select a New Task)',
-        value: null as any, // eslint-disable-line @typescript-eslint/no-explicit-any
-      })
-      const { choice } = await inquirer.prompt([
-        {
-          message: 'Select Recent Task?',
-          name: 'choice',
-          type: 'list',
-          choices,
-        },
-      ])
-      if (choice) {
-        await setRecent(choice)
-        const { cluster, task } = choice
-        return { cluster, task }
+  let pruneObsoletePromise
+
+  try {
+    if (isSupportedCacheVersion(cache.version)) {
+      pruneObsoletePromise = pruneObsoleteTasks()
+      pruneObsoletePromise.catch(noop)
+      const { cluster } = options
+      const recent =
+        cache.recent && cluster
+          ? cache.recent.filter(
+              item => displayCluster(item.cluster) === displayCluster(cluster)
+            )
+          : cache.recent
+      if (recent && recent.length) {
+        const choices = recent.map(({ cluster, serviceName, task }) => ({
+          name: [displayCluster(cluster), serviceName, displayTask(task)].join(
+            ' > '
+          ),
+          value: { cluster, serviceName, task },
+        }))
+        choices.splice(1, 0, {
+          name: 'None (Select a New Task)',
+          value: null as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+        })
+        const { choice } = await inquirer.prompt([
+          {
+            message: 'Select Recent Task?',
+            name: 'choice',
+            type: 'list',
+            choices,
+          },
+        ])
+        if (choice) {
+          await markRecent(choice)
+          const { cluster, task } = choice
+          return { cluster, task }
+        }
       }
     }
+
+    const cluster =
+      options.cluster ||
+      (await (async (): Promise<string> => {
+        const clusters = await clustersPromise
+        const { cluster } = await inquirer.prompt([
+          {
+            message: 'Select ECS Cluster',
+            name: 'cluster',
+            type: 'list',
+            choices: flow(
+              filter(options.clusterFilter || ((): boolean => true)),
+              map(({ clusterName, clusterArn }: AWS.ECS.Cluster) => ({
+                name: clusterName,
+                value: clusterArn,
+              })),
+              sortBy('name')
+            )(clusters),
+          },
+        ])
+        return cluster
+      })())
+
+    const serviceName =
+      options.serviceName ||
+      (await (async (): Promise<string> => {
+        const services = await getServices(ecs, cluster)
+        const { service } = await inquirer.prompt([
+          {
+            message: 'Select ECS Service',
+            name: 'service',
+            type: 'list',
+            choices: flow(
+              map(({ serviceName }: AWS.ECS.Service) => serviceName)
+            )(services).sort(),
+          },
+        ])
+        return service
+      })())
+
+    const tasks = await getTasks(ecs, cluster, serviceName)
+    const { task } = await inquirer.prompt([
+      {
+        message: 'Select ECS Task',
+        name: 'task',
+        type: 'list',
+        choices: flow(
+          map((task: AWS.ECS.Task) => ({
+            name: displayTask(task.taskArn || ''),
+            value: task.taskArn,
+          }))
+        )(tasks),
+      },
+    ])
+    await pruneObsoletePromise
+    await markRecent({ cluster, serviceName, task })
+    return { cluster, task }
+  } finally {
+    if (pruneObsoletePromise) {
+      await pruneObsoletePromise.catch(
+        err => console.error(err.stack) // eslint-disable-line no-console
+      )
+    }
   }
-
-  const cluster =
-    options.cluster ||
-    (await (async (): Promise<string> => {
-      const clusters = await clustersPromise
-      await pruneObsoleteClusters(clusters)
-      const { cluster } = await inquirer.prompt([
-        {
-          message: 'Select ECS Cluster',
-          name: 'cluster',
-          type: 'list',
-          choices: flow(
-            filter(options.clusterFilter || ((): boolean => true)),
-            map(({ clusterName, clusterArn }: AWS.ECS.Cluster) => ({
-              name: clusterName,
-              value: clusterArn,
-            })),
-            sortBy('name')
-          )(clusters),
-        },
-      ])
-      return cluster
-    })())
-
-  const serviceName =
-    options.serviceName ||
-    (await (async (): Promise<string> => {
-      const services = await getServices(ecs, cluster)
-      await pruneObsoleteServices(cluster, services)
-      const { service } = await inquirer.prompt([
-        {
-          message: 'Select ECS Service',
-          name: 'service',
-          type: 'list',
-          choices: flow(map(({ serviceName }: AWS.ECS.Service) => serviceName))(
-            services
-          ).sort(),
-        },
-      ])
-      return service
-    })())
-
-  const tasks = await getTasks(ecs, cluster, serviceName)
-  await pruneObsoleteTasks(cluster, serviceName, tasks)
-  const { task } = await inquirer.prompt([
-    {
-      message: 'Select ECS Task',
-      name: 'task',
-      type: 'list',
-      choices: flow(
-        map((task: AWS.ECS.Task) => ({
-          name: displayTask(task.taskArn || ''),
-          value: task.taskArn,
-        }))
-      )(tasks),
-    },
-  ])
-  await setRecent({ cluster, serviceName, task })
-  return { cluster, task }
 }
