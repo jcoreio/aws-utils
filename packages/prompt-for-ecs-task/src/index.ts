@@ -162,7 +162,7 @@ export default async function promptForECSTask(
           groupBy((item: Recent) => item.cluster),
           (map as any).convert({ cap: false })((
             group: Recent[],
-            cluster: string // eslint-disable-line @typescript-eslint/no-explicit-any
+            cluster: string
           ) =>
             ecs
               .describeTasks({
