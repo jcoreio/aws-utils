@@ -4,6 +4,7 @@
   "description": "utilities for working with AWS without breaking your brain",
   "private": true,
   "workspaces": [
+    "packages/aws-sdk-async-iterables",
     "packages/ecs-agent-client",
     "packages/locate-ecs-task",
     "packages/prompt-for-ecs-task",
