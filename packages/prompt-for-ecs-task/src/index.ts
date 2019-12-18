@@ -160,16 +160,16 @@ export default async function promptForECSTask(
         if (!cache.recent || !cache.recent.length) return cache
         const groups = flow(
           groupBy((item: Recent) => item.cluster),
-          (map as any).convert({ cap: false })((
-            group: Recent[],
-            cluster: string
-          ) =>
-            ecs
-              .describeTasks({
-                cluster,
-                tasks: group.map(item => item.task),
-              })
-              .promise()
+          /* eslint-disable @typescript-eslint/no-explicit-any */
+          (map as any).convert({ cap: false })(
+            /* eslint-enable @typescript-eslint/no-explicit-any */
+            (group: Recent[], cluster: string) =>
+              ecs
+                .describeTasks({
+                  cluster,
+                  tasks: group.map(item => item.task),
+                })
+                .promise()
           )
         )(cache.recent) as Promise<AWS.ECS.DescribeTasksResponse>[]
 
