@@ -62,7 +62,9 @@
     "url": "https://github.com/jcoreio/aws-utils/issues"
   },
   "homepage": "https://github.com/jcoreio/aws-utils#readme",
-  "devDependencies": {},
+  "devDependencies": {
+    "mock-aws-s3": "^3.0.0"
+  },
   "dependencies": {
     "@babel/runtime": "^7.1.5",
     "aws-sdk": "^2.585.0"

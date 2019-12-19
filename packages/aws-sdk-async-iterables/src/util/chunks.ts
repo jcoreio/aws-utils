@@ -1,5 +1,5 @@
 export default async function* chunks<T>(
-  iterable: AsyncIterable<T>,
+  iterable: Iterable<T> | AsyncIterable<T>,
   size: number
 ): AsyncIterable<T[]> {
   let chunk = []

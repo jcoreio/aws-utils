@@ -18,7 +18,7 @@ export async function* listObjectsV2(
 }
 
 export async function* objectIdentifiers(
-  objects: AsyncIterable<AWS.S3.Object>
+  objects: Iterable<AWS.S3.Object> | AsyncIterable<AWS.S3.Object>
 ): AsyncIterable<AWS.S3.ObjectIdentifier> {
   for await (const { Key } of objects) {
     if (Key != null) yield { Key }
@@ -26,7 +26,9 @@ export async function* objectIdentifiers(
 }
 
 export type Delete = Omit<AWS.S3.Delete, 'Objects'> & {
-  Objects: AsyncIterable<AWS.S3.ObjectIdentifier>
+  Objects:
+    | Iterable<AWS.S3.ObjectIdentifier>
+    | AsyncIterable<AWS.S3.ObjectIdentifier>
 }
 
 export type DeleteObjectsRequest = Omit<
