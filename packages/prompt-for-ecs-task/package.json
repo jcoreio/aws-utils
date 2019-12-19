@@ -66,6 +66,7 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.1.5",
+    "@jcoreio/aws-sdk-async-iterables": "^2.0.0",
     "aws-sdk": "^2.585.0",
     "fs-extra": "^8.1.0",
     "inquirer": "^7.0.0",

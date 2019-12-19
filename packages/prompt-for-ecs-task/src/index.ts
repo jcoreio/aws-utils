@@ -1,9 +1,26 @@
 import AWS from 'aws-sdk'
+import {
+  skipFailures,
+  listClusters,
+  describeClusters,
+  listServices,
+  describeServices,
+  listTasks,
+  describeTasks,
+} from '@jcoreio/aws-sdk-async-iterables/ecs'
 import { flatten, groupBy, map, sortBy, filter, compact, noop } from 'lodash/fp'
 import * as inquirer from 'inquirer'
 import path from 'path'
 import fs from 'fs-extra'
 import { flow, differenceWith, isEqual } from 'lodash'
+
+async function slurp<T>(iterable: AsyncIterable<T>): Promise<T[]> {
+  const result = []
+  for await (const item of iterable) {
+    result.push(item)
+  }
+  return result
+}
 
 type Recent = {
   cluster: string
@@ -27,91 +44,31 @@ const displayCluster = (cluster: string): string =>
 const displayTask = (task: string): string =>
   task.replace(/^arn:aws[^/]+task\//, '')
 
-async function getClusters(ECS: AWS.ECS): Promise<AWS.ECS.Cluster[]> {
-  const chunks: AWS.ECS.Cluster[][] = []
-  let { clusterArns, nextToken } = await ECS.listClusters().promise()
-  if (clusterArns) {
-    const { clusters } = await ECS.describeClusters({
-      clusters: clusterArns,
-    }).promise()
-    if (clusters) chunks.push(clusters)
-  }
-  while (nextToken) {
-    ;({ clusterArns, nextToken } = await ECS.listClusters({
-      nextToken,
-    }).promise())
-    if (clusterArns) {
-      const { clusters } = await ECS.describeClusters({
-        clusters: clusterArns,
-      }).promise()
-      if (clusters) chunks.push(clusters)
-    }
-  }
-  return flatten(chunks)
-}
+const getClusters = (ecs: AWS.ECS): Promise<AWS.ECS.Cluster[]> =>
+  slurp(skipFailures(describeClusters)(ecs, { clusters: listClusters(ecs) }))
 
-async function getServices(
-  ECS: AWS.ECS,
+const getServices = (
+  ecs: AWS.ECS,
   cluster: string
-): Promise<AWS.ECS.Service[]> {
-  const chunks: AWS.ECS.Service[][] = []
-  let { serviceArns, nextToken } = await ECS.listServices({ cluster }).promise()
-  if (serviceArns) {
-    const { services } = await ECS.describeServices({
+): Promise<AWS.ECS.Service[]> =>
+  slurp(
+    skipFailures(describeServices)(ecs, {
       cluster,
-      services: serviceArns,
-    }).promise()
-    if (services) chunks.push(services)
-  }
-  while (nextToken) {
-    ;({ serviceArns, nextToken } = await ECS.listServices({
-      cluster,
-      nextToken,
-    }).promise())
-    if (serviceArns) {
-      const { services } = await ECS.describeServices({
-        cluster,
-        services: serviceArns,
-      }).promise()
-      if (services) chunks.push(services)
-    }
-  }
-  return flatten(chunks)
-}
+      services: listServices(ecs, { cluster }),
+    })
+  )
 
-async function getTasks(
-  ECS: AWS.ECS,
+const getTasks = (
+  ecs: AWS.ECS,
   cluster: string,
   serviceName: string
-): Promise<AWS.ECS.Task[]> {
-  const chunks: AWS.ECS.Task[][] = []
-  let { taskArns, nextToken } = await ECS.listTasks({
-    cluster,
-    serviceName,
-  }).promise()
-  if (taskArns) {
-    const { tasks } = await ECS.describeTasks({
+): Promise<AWS.ECS.Task[]> =>
+  slurp(
+    skipFailures(describeTasks)(ecs, {
       cluster,
-      tasks: taskArns,
-    }).promise()
-    if (tasks) chunks.push(tasks)
-  }
-  while (nextToken) {
-    ;({ taskArns, nextToken } = await ECS.listTasks({
-      cluster,
-      serviceName,
-      nextToken,
-    }).promise())
-    if (taskArns) {
-      const { tasks } = await ECS.describeTasks({
-        cluster,
-        tasks: taskArns,
-      }).promise()
-      if (tasks) chunks.push(tasks)
-    }
-  }
-  return flatten(chunks)
-}
+      tasks: listTasks(ecs, { cluster, serviceName }),
+    })
+  )
 
 export default async function promptForECSTask(
   options: {
