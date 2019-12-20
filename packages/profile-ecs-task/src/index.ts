@@ -165,7 +165,56 @@ export async function takeHeapSnapshot(options: {
   await pipeResponse(
     request.get({
       uri: `${profilerBaseUrl}/heap`,
-      timeout: 60000,
+      timeout: 15 * 60000,
+      headers: { Accept: 'application/json' },
+    }),
+    fs.createWriteStream(outFile, 'utf8')
+  )
+  process.stderr.write(`done\n`)
+
+  return { file: outFile }
+}
+
+export async function sampleHeapProfiling(options: {
+  cluster: string
+  task: string
+  durationMillis: number
+  interval?: number | null
+  depth?: number | null
+  ECS?: AWS.ECS | undefined
+  EC2?: AWS.EC2 | undefined
+  outDir?: string | undefined
+}): Promise<{ file: string }> {
+  const { cluster, task, durationMillis, interval, depth } = options
+  const outDir = options.outDir || process.cwd()
+  const ECS = options.ECS || new AWS.ECS()
+  const EC2 = options.EC2 || new AWS.EC2()
+
+  const { name, profilerBaseUrl } = await getTaskInfo({
+    cluster,
+    task,
+    ECS,
+    EC2,
+  })
+
+  const outFile = path.join(
+    outDir,
+    getOutFile(cluster, name || task, 'cpuprofile')
+  )
+  await fs.mkdirs(path.dirname(outFile))
+
+  process.stderr.write(
+    `${profilerBaseUrl}/cpu?durationMillis=${durationMillis}
+  -> ${path.relative(process.cwd(), outFile)}...`
+  )
+  await pipeResponse(
+    request.get({
+      uri: profilerBaseUrl + '/sampleHeapProfiling',
+      timeout: durationMillis * 2,
+      qs: {
+        durationMillis,
+        ...(interval != null && depth != null ? { interval, depth } : {}),
+      },
       headers: { Accept: 'application/json' },
     }),
     fs.createWriteStream(outFile, 'utf8')

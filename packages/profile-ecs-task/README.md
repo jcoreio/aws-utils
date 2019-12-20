@@ -67,3 +67,45 @@ The EC2 client
 ### Returns `Promise<{file: string}>`
 
 An object with the `file` that the snapshot was saved into.
+
+## `sampleHeapProfiling(options)`
+
+Runs the heap sampler on an ECS task, saving the profile into a file.
+
+### Options
+
+#### `cluster: string` (**required**)
+
+The ECS cluster
+
+#### `task: string` (**required**)
+
+The ECS task arn
+
+#### `durationMillis: number` (**required**)
+
+The amount of time to run the sampler, in milliseconds
+
+#### `interval: number` (_optional_)
+
+The sampling interval, in milliseconds
+
+#### `depth: number` (_optional_)
+
+The sampling depth
+
+#### `outDir: string` (**required**)
+
+The base output directory for the file.
+
+#### `ECS: AWS.ECS` (_optional_)
+
+The ECS client
+
+#### `EC2: AWS.EC2` (_optional_)
+
+The EC2 client
+
+### Returns `Promise<{file: string}>`
+
+An object with the `file` that the profile was saved into.
