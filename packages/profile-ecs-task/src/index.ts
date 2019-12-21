@@ -199,7 +199,7 @@ export async function sampleHeapProfiling(options: {
 
   const outFile = path.join(
     outDir,
-    getOutFile(cluster, name || task, 'cpuprofile')
+    getOutFile(cluster, name || task, 'heapprofile')
   )
   await fs.mkdirs(path.dirname(outFile))
 
@@ -222,4 +222,26 @@ export async function sampleHeapProfiling(options: {
   process.stderr.write(`done\n`)
 
   return { file: outFile }
+}
+
+export async function gc(options: {
+  cluster: string
+  task: string
+  ECS?: AWS.ECS | undefined
+  EC2?: AWS.EC2 | undefined
+}): Promise<void> {
+  const { cluster, task } = options
+  const ECS = options.ECS || new AWS.ECS()
+  const EC2 = options.EC2 || new AWS.EC2()
+
+  const { profilerBaseUrl } = await getTaskInfo({
+    cluster,
+    task,
+    ECS,
+    EC2,
+  })
+
+  process.stderr.write(`${profilerBaseUrl}/gc...`)
+  await request.get(profilerBaseUrl + '/gc')
+  process.stderr.write(`done\n`)
 }

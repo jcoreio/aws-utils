@@ -109,3 +109,29 @@ The EC2 client
 ### Returns `Promise<{file: string}>`
 
 An object with the `file` that the profile was saved into.
+
+## `gc(options)`
+
+Runs the garbage collector in an ECS task.
+
+### Options
+
+#### `cluster: string` (**required**)
+
+The ECS cluster
+
+#### `task: string` (**required**)
+
+The ECS task arn
+
+#### `ECS: AWS.ECS` (_optional_)
+
+The ECS client
+
+#### `EC2: AWS.EC2` (_optional_)
+
+The EC2 client
+
+### Returns `Promise<void>`
+
+Will resolve once the garbage collector has been called
