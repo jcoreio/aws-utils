@@ -17,7 +17,7 @@
     "lint": "--cache --ext .js,.ts src test",
     "mocha": "test/configure.js 'src/**/*.spec.ts'",
     "commitizen": {
-      "path": "cz-lerna-changelog"
+      "path": "./node_modules/cz-lerna-changelog"
     }
   },
   "husky": {
