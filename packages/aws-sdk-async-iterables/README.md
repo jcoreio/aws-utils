@@ -40,6 +40,21 @@ Right now there are only wrappers for the methods listed below. I'll add wrapper
 
 # API
 
+## EC2
+
+```js
+import { EC2 } from '@jcoreio/aws-sdk-async-iterables'
+```
+
+### `describeSubnets`
+
+```js
+export async function* describeSubnets(
+  ec2: AWS.EC2,
+  params: AWS.EC2.DescribeSubnetsRequest
+): AsyncIterable<AWS.EC2.Subnet>
+```
+
 ## ECS
 
 ```js
