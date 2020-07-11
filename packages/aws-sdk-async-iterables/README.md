@@ -13,32 +13,178 @@ Right now there are only wrappers for the methods listed below. I'll add wrapper
 
 <!-- toc -->
 
-- [@jcoreio/aws-sdk-async-iterables](#jcoreioaws-sdk-async-iterables)
-- [Overview](#overview)
-- [Table of Contents](#table-of-contents)
 - [API](#api)
+  - [CloudFormation](#cloudformation)
+    - [`describeStackEvents`](#describestackevents)
+    - [`describeStacks`](#describestacks)
+    - [`listChangeSets`](#listchangesets)
+    - [`listExports`](#listexports)
+    - [`listImports`](#listimports)
+    - [`listStackInstances`](#liststackinstances)
+    - [`listStackResources`](#liststackresources)
+    - [`listStacks`](#liststacks)
+    - [`listStackSetOperationResults`](#liststacksetoperationresults)
+    - [`listStackSetOperations`](#liststacksetoperations)
+    - [`listStackSets`](#liststacksets)
+    - [`listTypeRegistrations`](#listtyperegistrations)
+    - [`listTypes`](#listtypes)
+    - [`listTypeVersions`](#listtypeversions)
+  - [EC2](#ec2)
+    - [`describeSubnets`](#describesubnets)
   - [ECS](#ecs)
-    - [describeCapacityProviders](#describecapacityproviders)
-    - [describeClusters](#describeclusters)
-    - [describeContainerInstances](#describecontainerinstances)
-    - [describeServices](#describeservices)
-    - [describeTasks](#describetasks)
-    - [describeTaskSets](#describetasksets)
-    - [listAccountSettings](#listaccountsettings)
-    - [listClusters](#listclusters)
-    - [listContainerInstances](#listcontainerinstances)
-    - [listServices](#listservices)
-    - [listTaskDefinitionFamilies](#listtaskdefinitionfamilies)
-    - [listTaskDefinitions](#listtaskdefinitions)
-    - [listTasks](#listtasks)
+    - [`describeCapacityProviders`](#describecapacityproviders)
+    - [`describeClusters`](#describeclusters)
+    - [`describeContainerInstances`](#describecontainerinstances)
+    - [`describeServices`](#describeservices)
+    - [`describeTasks`](#describetasks)
+    - [`describeTaskSets`](#describetasksets)
+    - [`listAccountSettings`](#listaccountsettings)
+    - [`listClusters`](#listclusters)
+    - [`listContainerInstances`](#listcontainerinstances)
+    - [`listServices`](#listservices)
+    - [`listTaskDefinitionFamilies`](#listtaskdefinitionfamilies)
+    - [`listTaskDefinitions`](#listtaskdefinitions)
+    - [`listTasks`](#listtasks)
   - [S3](#s3)
-    - [listObjectsV2](#listobjectsv2)
-    - [deleteObjects](#deleteobjects)
-    - [listAndDeleteObjects](#listanddeleteobjects)
+    - [`listObjectsV2`](#listobjectsv2)
+    - [`deleteObjects`](#deleteobjects)
+    - [`listAndDeleteObjects`](#listanddeleteobjects)
 
 <!-- tocstop -->
 
 # API
+
+## CloudFormation
+
+```ts
+import { CloudFormation } from '@jcoreio/aws-sdk-async-iterables'
+```
+
+### `describeStackEvents`
+
+```ts
+export async function* describeStackEvents(
+  cloudformation: AWS.CloudFormation,
+  params: AWS.CloudFormation.DescribeStackEventsInput
+): AsyncIterable<AWS.CloudFormation.StackEvent>
+```
+
+### `describeStacks`
+
+```ts
+export async function* describeStacks(
+  cloudformation: AWS.CloudFormation,
+  params: AWS.CloudFormation.DescribeStacksInput
+): AsyncIterable<AWS.CloudFormation.Stack>
+```
+
+### `listChangeSets`
+
+```ts
+export async function* listChangeSets(
+  cloudformation: AWS.CloudFormation,
+  params: AWS.CloudFormation.ListChangeSetsInput
+): AsyncIterable<AWS.CloudFormation.ChangeSetSummary>
+```
+
+### `listExports`
+
+```ts
+export async function* listExports(
+  cloudformation: AWS.CloudFormation,
+  params: AWS.CloudFormation.ListExportsInput
+): AsyncIterable<AWS.CloudFormation.Export>
+```
+
+### `listImports`
+
+```ts
+export async function* listImports(
+  cloudformation: AWS.CloudFormation,
+  params: AWS.CloudFormation.ListImportsInput
+): AsyncIterable<AWS.CloudFormation.Imports[number]>
+```
+
+### `listStackInstances`
+
+```ts
+export async function* listStackInstances(
+  cloudformation: AWS.CloudFormation,
+  params: AWS.CloudFormation.ListStackInstancesInput
+): AsyncIterable<AWS.CloudFormation.StackInstanceSummary>
+```
+
+### `listStackResources`
+
+```ts
+export async function* listStackResources(
+  cloudformation: AWS.CloudFormation,
+  params: AWS.CloudFormation.ListStackResourcesInput
+): AsyncIterable<AWS.CloudFormation.StackResourceSummary>
+```
+
+### `listStacks`
+
+```ts
+export async function* listStacks(
+  cloudformation: AWS.CloudFormation,
+  params: AWS.CloudFormation.ListStacksInput
+): AsyncIterable<AWS.CloudFormation.StackSummary>
+```
+
+### `listStackSetOperationResults`
+
+```ts
+export async function* listStackSetOperationResults(
+  cloudformation: AWS.CloudFormation,
+  params: AWS.CloudFormation.ListStackSetOperationResultsInput
+): AsyncIterable<AWS.CloudFormation.StackSetOperationResultSummary>
+```
+
+### `listStackSetOperations`
+
+```ts
+export async function* listStackSetOperations(
+  cloudformation: AWS.CloudFormation,
+  params: AWS.CloudFormation.ListStackSetOperationsInput
+): AsyncIterable<AWS.CloudFormation.StackSetOperationSummary>
+```
+
+### `listStackSets`
+
+```ts
+export async function* listStackSets(
+  cloudformation: AWS.CloudFormation,
+  params: AWS.CloudFormation.ListStackSetsInput
+): AsyncIterable<AWS.CloudFormation.StackSetSummary>
+```
+
+### `listTypeRegistrations`
+
+```ts
+export async function* listTypeRegistrations(
+  cloudformation: AWS.CloudFormation,
+  params: AWS.CloudFormation.ListTypeRegistrationsInput
+): AsyncIterable<AWS.CloudFormation.RegistrationToken>
+```
+
+### `listTypes`
+
+```ts
+export async function* listTypes(
+  cloudformation: AWS.CloudFormation,
+  params: AWS.CloudFormation.ListTypesInput
+): AsyncIterable<AWS.CloudFormation.TypeSummary>
+```
+
+### `listTypeVersions`
+
+```ts
+export async function* listTypeVersions(
+  cloudformation: AWS.CloudFormation,
+  params: AWS.CloudFormation.ListTypeVersionsInput
+): AsyncIterable<AWS.CloudFormation.TypeVersionSummary>
+```
 
 ## EC2
 

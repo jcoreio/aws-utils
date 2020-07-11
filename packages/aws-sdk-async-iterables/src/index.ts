@@ -1,5 +1,6 @@
-import * as S3 from './s3'
+import * as CloudFormation from './cloudformation'
 import * as EC2 from './ec2'
 import * as ECS from './ecs'
+import * as S3 from './s3'
 
-export { S3, EC2, ECS }
+export { CloudFormation, EC2, ECS, S3 }
