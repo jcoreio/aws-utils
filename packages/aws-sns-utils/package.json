@@ -59,9 +59,12 @@
     "url": "https://github.com/jcoreio/aws-utils/issues"
   },
   "homepage": "https://github.com/jcoreio/aws-utils#readme",
-  "devDependencies": {},
+  "devDependencies": {
+    "@types/verror": "^1.10.4"
+  },
   "dependencies": {
     "@babel/runtime": "^7.1.5",
-    "aws-sdk": "^2.585.0"
+    "aws-sdk": "^2.585.0",
+    "verror": "^1.10.0"
   }
 }

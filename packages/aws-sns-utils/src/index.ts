@@ -1,4 +1,5 @@
 import AWS from 'aws-sdk'
+import { VError } from 'verror'
 
 export const DEFAULT_SERVICE_MONITORING_TOPIC = 'service-monitoring'
 
@@ -14,7 +15,7 @@ export type SNSTopicOpts = GetSNSTopicArnOpts & {
 }
 
 const getSNSFromOpts = (options: SNSTopicOpts): AWS.SNS =>
-  options.SNS || new AWS.SNS()
+  options.SNS || new AWS.SNS({ region: options.AWSRegion })
 
 export function getSNSTopicArn(options: GetSNSTopicArnOpts): string {
   const { AWSRegion, AWSAccountId, TopicName, TopicArn } = options
@@ -26,14 +27,16 @@ export function getSNSTopicArn(options: GetSNSTopicArnOpts): string {
 
 export async function snsTopicExists(options: SNSTopicOpts): Promise<boolean> {
   const sns = getSNSFromOpts(options)
+  const TopicArn = getSNSTopicArn(options)
   try {
-    await sns
-      .getTopicAttributes({ TopicArn: getSNSTopicArn(options) })
-      .promise()
+    await sns.getTopicAttributes({ TopicArn }).promise()
     return true
   } catch (err) {
-    // TODO: detect the "does not exist" error
-    return false
+    if ('NotFound' === err.code) return false
+    throw new VError(
+      err,
+      `error while using the AWS SNS API to detect whether topic ${TopicArn} exists`
+    )
   }
 }
 
