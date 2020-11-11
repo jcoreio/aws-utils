@@ -5,6 +5,7 @@
   "private": true,
   "workspaces": [
     "packages/aws-sdk-async-iterables",
+    "packages/aws-sns-utils",
     "packages/ecs-agent-client",
     "packages/locate-ecs-task",
     "packages/prompt-for-ecs-task",
