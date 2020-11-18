@@ -113,7 +113,7 @@
     "prettier": "^1.15.2",
     "prettier-eslint": "^9.0.1",
     "rimraf": "^2.6.0",
-    "semantic-release": "15.8.0",
+    "semantic-release": "17.2.3",
     "semantic-release-monorepo": "^6.1.1",
     "typescript": "^3.7.2"
   },
