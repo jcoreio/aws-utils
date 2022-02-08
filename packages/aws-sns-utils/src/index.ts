@@ -4,8 +4,9 @@ import { VError } from 'verror'
 export const DEFAULT_SERVICE_MONITORING_TOPIC = 'service-monitoring'
 
 export type GetSNSTopicArnOpts = {
+  awsConfig?: AWS.ConfigurationOptions
   AWSAccountId: string
-  AWSRegion: string
+  AWSRegion?: string
   TopicName: string
   TopicArn?: string | null
 }
@@ -15,10 +16,16 @@ export type SNSTopicOpts = GetSNSTopicArnOpts & {
 }
 
 const getSNSFromOpts = (options: SNSTopicOpts): AWS.SNS =>
-  options.SNS || new AWS.SNS({ region: options.AWSRegion })
+  options.SNS || new AWS.SNS(options.awsConfig)
 
 export function getSNSTopicArn(options: GetSNSTopicArnOpts): string {
-  const { AWSRegion, AWSAccountId, TopicName, TopicArn } = options
+  const {
+    awsConfig,
+    AWSRegion = awsConfig?.region,
+    AWSAccountId,
+    TopicName,
+    TopicArn,
+  } = options
   if (!AWSRegion) throw Error('upsertSNSTopic: AWSRegion is required')
   if (!AWSAccountId) throw Error('upsertSNSTopic: AWSAccountId is required')
   if (!TopicName) throw Error('upsertSNSTopic: TopicName is required')
